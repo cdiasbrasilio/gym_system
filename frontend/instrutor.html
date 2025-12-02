@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel do Instrutor</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+        .container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #aaa; margin-bottom: 20px; }
+        input, button { padding: 8px; margin: 5px 0; width: 100%; }
+        h2, h3 { margin-top: 0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Bem-vindo, <span id="nomeInstrutor"></span>!</h2>
+        <p>Email: <span id="emailInstrutor"></span></p>
+        <p>Tipo: <span id="tipoInstrutor"></span></p>
+        <button id="logoutBtn">Logout</button>
+    </div>
+
+    <div class="container">
+        <h3>Lista de Alunos</h3>
+        <ul id="listaAlunos"></ul>
+    </div>
+
+    <div class="container">
+        <h3>Cadastrar Novo Aluno</h3>
+        <form id="formAluno">
+            <input type="text" id="nomeAluno" placeholder="Nome" required>
+            <input type="email" id="emailAluno" placeholder="Email" required>
+            <input type="password" id="senhaAluno" placeholder="Senha" required>
+            <button type="submit">Cadastrar Aluno</button>
+        </form>
+        <p id="mensagemCadastro"></p>
+    </div>
+
+    <script>
+        const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+        console.log("Usuário no localStorage:", usuario);
+
+        // Proteção de acesso
+        if (!usuario) {
+            alert("Nenhum usuário logado. Faça login novamente.");
+            window.location.href = "index.html";
+        } else if ((usuario.tipo || "").trim().toLowerCase() !== "instrutor") {
+            alert(`Acesso negado: perfil atual é "${usuario.tipo}". Entre como instrutor.`);
+            localStorage.removeItem("usuario");
+            window.location.href = "index.html";
+        } else {
+            document.getElementById("nomeInstrutor").textContent = usuario.nome;
+            document.getElementById("emailInstrutor").textContent = usuario.email;
+            document.getElementById("tipoInstrutor").textContent = usuario.tipo;
+        }
+
+        // Logout
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+            localStorage.removeItem("usuario");
+            window.location.href = "index.html";
+        });
+
+        // Carregar lista de alunos
+        function carregarAlunos() {
+            fetch("http://127.0.0.1:5000/alunos")
+                .then(res => {
+                    if (!res.ok) throw new Error("Falha ao carregar alunos");
+                    return res.json();
+                })
+                .then(alunos => {
+                    const lista = document.getElementById("listaAlunos");
+                    lista.innerHTML = "";
+                    alunos.forEach(a => {
+                        const li = document.createElement("li");
+                        li.textContent = `${a.nome} (${a.email})`;
+                        lista.appendChild(li);
+                    });
+                })
+                .catch(err => {
+                    console.error("Erro ao carregar alunos:", err);
+                    const lista = document.getElementById("listaAlunos");
+                    lista.innerHTML = "<li class='error'>Não foi possível carregar os alunos.</li>";
+                });
+        }
+
+        carregarAlunos();
+
+        // Cadastro de novo aluno
+        document.getElementById("formAluno").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById("nomeAluno").value;
+            const email = document.getElementById("emailAluno").value;
+            const senha = document.getElementById("senhaAluno").value;
+            const mensagem = document.getElementById("mensagemCadastro");
+
+            try {
+                const resposta = await fetch("http://127.0.0.1:5000/alunos", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nome, email, senha })
+                });
+
+                const resultado = await resposta.json();
+
+                if (resposta.ok) {
+                    mensagem.textContent = "✅ " + (resultado.status || "Aluno criado com sucesso");
+                    mensagem.className = "success";
+                    document.getElementById("formAluno").reset();
+                    carregarAlunos();
+                } else {
+                    mensagem.textContent = "❌ " + (resultado.mensagem || "Erro ao cadastrar aluno");
+                    mensagem.className = "error";
+                }
+            } catch (erro) {
+                mensagem.textContent = "❌ Erro de conexão com o servidor.";
+                mensagem.className = "error";
+            }
+        });
+    </script>
+</body>

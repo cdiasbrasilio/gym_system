@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel do Aluno</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+        .container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #aaa; margin-bottom: 20px; }
+        button { padding: 8px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Bem-vindo, <span id="nomeAluno"></span>!</h2>
+        <p>Email: <span id="emailAluno"></span></p>
+        <p>Tipo: <span id="tipoAluno"></span></p>
+        <button id="logoutBtn">Logout</button>
+    </div>
+
+    <script>
+        const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+        if (usuario && usuario.tipo === "aluno") {
+            document.getElementById("nomeAluno").textContent = usuario.nome;
+            document.getElementById("emailAluno").textContent = usuario.email;
+            document.getElementById("tipoAluno").textContent = usuario.tipo;
+        } else {
+            alert("Nenhum usuário logado. Faça login novamente.");
+            window.location.href = "index.html";
+        }
+
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+            localStorage.removeItem("usuario");
+            window.location.href = "index.html";
+        });
+    </script>
+</body>

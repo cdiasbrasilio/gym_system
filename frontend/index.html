@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Gym Web</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #aaa;
+            width: 300px;
+        }
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .login-container input, .login-container select, .login-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="senha" placeholder="Senha" required>
+            <select id="perfil" required>
+                <option value="">Selecione o perfil</option>
+                <option value="aluno">Aluno</option>
+                <option value="instrutor">Instrutor</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button type="submit">Entrar</button>
+        </form>
+        <div id="mensagem" class="error-message"></div>
+    </div>
+
+    <script>
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value;
+    const senha = document.getElementById("senha").value;
+    const perfil = document.getElementById("perfil").value;
+    const mensagemDiv = document.getElementById("mensagem");
+
+    try {
+        const resposta = await fetch("http://127.0.0.1:5000/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, senha, tipo: perfil })
+        });
+
+        if (!resposta.ok) {
+            mensagemDiv.textContent = "Erro no servidor. Tente novamente.";
+            return;
+        }
+
+        const resultado = await resposta.json();
+        console.log("Resposta do backend:", resultado);
+
+        if (resultado.status === "ok") {
+            // 🔹 Trecho do item 2: guardar dados no localStorage
+            localStorage.setItem("usuario", JSON.stringify({
+                id: resultado.id,
+                nome: resultado.nome,
+                email: email,   // pega do formulário
+                tipo: resultado.tipo
+            }));
+
+            // Redireciona para a página correta
+            if (resultado.tipo === "aluno") {
+                window.location.href = "aluno.html";
+            } else if (resultado.tipo === "instrutor") {
+                window.location.href = "instrutor.html";
+            } else if (resultado.tipo === "admin") {
+                window.location.href = "admin.html";
+            }
+        } else {
+            mensagemDiv.textContent = "❌ Credenciais inválidas. Verifique email, senha e perfil.";
+        }
+    } catch (erro) {
+        console.error("Erro na requisição:", erro);
+        mensagemDiv.textContent = "Erro de conexão com o servidor.";
+    }
+});
+</script>
+</body>
+</html>

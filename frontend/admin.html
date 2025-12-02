@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel do Admin</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+        .container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #aaa; margin-bottom: 20px; }
+        input, button { padding: 8px; margin: 5px 0; width: 100%; }
+        h2, h3 { margin-top: 0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Bem-vindo, <span id="nomeAdmin"></span>!</h2>
+        <p>Email: <span id="emailAdmin"></span></p>
+        <p>Tipo: <span id="tipoAdmin"></span></p>
+    </div>
+
+    <div class="container">
+        <h3>Lista de Instrutores</h3>
+        <ul id="listaInstrutores"></ul>
+    </div>
+
+    <div class="container">
+        <h3>Cadastrar Novo Instrutor</h3>
+        <form id="formInstrutor">
+            <input type="text" id="nomeInstrutor" placeholder="Nome" required>
+            <input type="email" id="emailInstrutor" placeholder="Email" required>
+            <input type="password" id="senhaInstrutor" placeholder="Senha" required>
+            <button type="submit">Cadastrar Instrutor</button>
+        </form>
+        <p id="mensagemCadastro"></p>
+    </div>
+
+    <script>
+        const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+        if (usuario && usuario.tipo === "admin") {
+            document.getElementById("nomeAdmin").textContent = usuario.nome;
+            document.getElementById("emailAdmin").textContent = usuario.email;
+            document.getElementById("tipoAdmin").textContent = usuario.tipo;
+
+            // 🔹 Carregar lista de instrutores
+            function carregarInstrutores() {
+                fetch("http://127.0.0.1:5000/instrutores")
+                    .then(res => res.json())
+                    .then(instrutores => {
+                        const lista = document.getElementById("listaInstrutores");
+                        lista.innerHTML = "";
+                        instrutores.forEach(i => {
+                            const li = document.createElement("li");
+                            li.textContent = `${i.nome} (${i.email})`;
+                            lista.appendChild(li);
+                        });
+                    })
+                    .catch(err => console.error("Erro ao carregar instrutores:", err));
+            }
+
+            carregarInstrutores();
+
+            // 🔹 Cadastro de novo instrutor
+            document.getElementById("formInstrutor").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const nome = document.getElementById("nomeInstrutor").value;
+                const email = document.getElementById("emailInstrutor").value;
+                const senha = document.getElementById("senhaInstrutor").value;
+                const mensagem = document.getElementById("mensagemCadastro");
+
+                try {
+                    const resposta = await fetch("http://127.0.0.1:5000/instrutores", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ nome, email, senha })
+                    });
+
+                    const resultado = await resposta.json();
+                    if (resposta.ok) {
+                        mensagem.textContent = "✅ " + resultado.status;
+                        mensagem.className = "success";
+                        carregarInstrutores(); // Atualiza lista
+                        document.getElementById("formInstrutor").reset();
+                    } else {
+                        mensagem.textContent = "❌ Erro: " + resultado.mensagem;
+                        mensagem.className = "error";
+                    }
+                } catch (erro) {
+                    mensagem.textContent = "❌ Erro de conexão com o servidor.";
+                    mensagem.className = "error";
+                }
+            });
+        } else {
+            alert("Acesso negado. Faça login como admin.");
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>
