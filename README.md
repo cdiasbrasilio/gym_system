@@ -55,7 +55,10 @@ The goal is to create a complete system for students, instructors, and administr
 - **Backend**: Python + Flask  
 - **Database**: PostgreSQL  
 - **Frontend**: HTML, CSS, JavaScript  
-- **Version control**: Git + GitHub  
+- **Version control**: Git + GitHub
+
+> ⚠️ The database schema (`schema.sql`) will be added at the final stage of development, once all features are consolidated. This ensures the script reflects the complete and stable structure of the project.
+
 
 ---
 
